@@ -1,48 +1,58 @@
-const express = require('express')
-const app = express()
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const cookiePaser = require('cookie-parser');
+const database = require('./db');
+const {validUser} = require("./middleware/auth");
+require("dotenv").config();
+
+const app = express();
+const salt = 12;
 const port = 3001
 
-const database = [
-    {id: 1, title: '글1'},
-    {id: 2, title: '글2'},
-    {id: 3, title: '글3'},
-]
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: false}));
+app.use(cookiePaser());
+app.use(express.urlencoded({extended: false}));
 
-// http://localhost:3001 에서 구동
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/views/index.html')
-})
-
-app.get('/database', (req, res) => {
+app.get('/users', validUser, (req, res) => {
     res.send(database);
+});
+
+app.get('/test', validUser, (req,res)=> {
+    res.send("인증됨");
 })
 
-app.get('/database/:id', (req, res) => {
-    const id = req.params.id;
-    const data = database.find((el) => el.id === Number(id));
-    res.send(data);
-})
-
-app.patch('/database', (req, res)=>{
-    const id = req.body.id;
-    const data = database.find((el) => el.id === Number(id));
-    req.body.title && (data.title = req.body.title);
-    req.body.newId && (data.id = req.body.newId);
-    res.send(data);
-})
-
-app.put('/database', (req, res) => {
-    const title = req.body.title;
+app.post('/signup', async (req, res) => {
+    const {username, password, birthday} = req.body;
+    const hash = await bcrypt.hash(password, salt);
     database.push({
-        id: database.length + 1,
-        title,
+        id: database.length,
+        username,
+        password: hash,
+        birthday,
     });
-    res.send('값 추가완료');
+    res.send("success");
 })
 
+app.post('/login', async (req, res) => {
+    const {username, password} = req.body;
+    const user = database.filter((user) => user.username === username);
+
+    if (user.length === 0) {
+        res.status(403).send('해당하는 아이디가 없습니다!');
+        return
+    }
+
+    const match = await bcrypt.compare(password, user[0].password);
+
+    if (match === false) {
+        res.status(403).send('비밀번호가 틀렸습니다.');
+        return
+    }
+    const access_token = jwt.sign({username}, process.env.SECRET_KEY);
+    res.cookie('access_token', access_token, {httpOnly: true});
+    res.send("로그인 성공");
+})
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
