@@ -59,7 +59,7 @@ app.post('/login' , async ( req , res ) => {
         id: user[ 0 ].id ,
         username: user[0].username,
         signup_date: user[0].signup_date,
-        birthDay: user[ 0 ].birthday,
+        birth: user[ 0 ].birth,
     }
     res.send(userData);
 })
