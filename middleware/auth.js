@@ -8,11 +8,11 @@ const validUser = (req, res, next) => {
         res.status(401).send("accesstoken이 없습니다");
     }
     try {
-        const {username} = jwt.verify(access_token, process.env.SECRET_KEY);
-        const userInfo = database.find((data) => data.username === username);
+        const {id} = jwt.verify(access_token, process.env.SECRET_KEY);
+        const userInfo = database.find((data) => data.id === id);
 
         if (!userInfo) {
-            throw "userinfo가 없습니다";
+            console.log("userinfo가 없습니다");
         }
 
         next();
