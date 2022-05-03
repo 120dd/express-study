@@ -58,8 +58,8 @@ app.post('/login' , async ( req , res ) => {
     const userData = {
         id: user[ 0 ].id ,
         username: user[0].username,
-        signup_date: user.signup_date,
-        birthDay: user[ 0 ].birthday ,
+        signup_date: user[0].signup_date,
+        birthDay: user[ 0 ].birthday,
     }
     res.send(userData);
 })
