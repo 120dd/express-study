@@ -25,7 +25,7 @@ app.get('/test' , validUser , ( req , res ) => {
 })
 
 app.post('/signup' , async ( req , res ) => {
-    const { id , password , birthday, username } = req.body;
+    const { id , password , birth, username } = req.body;
     const hash = await bcrypt.hash(password , salt);
     const dateTime = new Date();
     database.push({
@@ -33,7 +33,7 @@ app.post('/signup' , async ( req , res ) => {
         id: id ,
         password: hash ,
         username,
-        birthday
+        birth
     });
     res.send("success");
 })
