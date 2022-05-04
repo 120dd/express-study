@@ -2,25 +2,35 @@ const database = require('../db');
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
 
-const validUser = (req, res, next) => {
-    const {access_token} = req.cookies;
-    if (!access_token) {
-        res.status(401).send("accesstoken이 없습니다");
-    }
+const SECERT_KEY = process.env.SECRET_KEY;
+
+const validUser = ( req , res , next ) => {
     try {
-        const {id} = jwt.verify(access_token, process.env.SECRET_KEY);
-        const userInfo = database.find((data) => data.id === id);
-
-        if (!userInfo) {
-            console.log("userinfo가 없습니다");
-        }
-
-        next();
+        req.decoded = jwt.verify(req.headers.authorization , SECERT_KEY);
+        return next();
     } catch (e) {
-        res.status(401).send('유효하지않은 유저입니다');
+        if (!req.decoded) {
+            return res.status(401).send("accesstoken이 없습니다");
+        }
+        if (error.name === 'TokenExpiredError') {
+            return res.status(419).json({
+                code: 419 ,
+                message: '토큰이 만료되었습니다.'
+            });
+        }
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({
+                code: 401 ,
+                message: '유효하지 않은 토큰입니다.'
+            });
+        }
+        res.status(404).json({
+            code: 404 ,
+            message: '확인되지않은 오류입니다.'
+        });
     }
 };
 
 module.exports = {
-    validUser,
+    validUser ,
 };

@@ -1,11 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const cookiePaser = require('cookie-parser');
 const database = require('./db');
 const { validUser } = require("./middleware/auth");
 const cors = require('cors');
-const { CookieConfig } = require("./constants");
 require("dotenv").config();
 
 const app = express();
@@ -17,16 +15,22 @@ app.use(cors({
     origin: true,
     credentials: true,
 }));
-app.use(cookiePaser());
 app.use(express.urlencoded({ extended: false }));
 
-app.get('/users' , validUser , (req,res ) => {
-    res.send(database);
+app.get('/getUserInfo' , validUser , (req,res ) => {
+    const {signup_date,id,username,birth} = req.decoded;
+    const data = {
+        signup_date,
+        id,
+        username,
+        birth
+    }
+    return res.status(200).json({
+        code: 200,
+        message: '정상 토큰입니다.',
+        data
+    })
 });
-
-app.get('/test' , validUser , ( req , res ) => {
-    res.send("인증됨");
-})
 
 app.post('/signup' , async ( req , res ) => {
     const { id , password , birth, username } = req.body;
@@ -57,15 +61,24 @@ app.post('/login' , async ( req , res ) => {
         res.status(403).send('비밀번호가 틀렸습니다.');
         return
     }
-    const access_token = jwt.sign({ id } , process.env.SECRET_KEY);
-    res.cookie('access_token' , access_token , CookieConfig);
     const userData = {
         id: user[ 0 ].id ,
         username: user[0].username,
         signup_date: user[0].signup_date,
         birth: user[0].birth,
     }
-    res.send(userData);
+    const access_token = jwt.sign({
+        type: 'JWT',
+        ...userData,
+    } , process.env.SECRET_KEY,{
+        expiresIn: '15m',
+        issuer: 'chris'
+    });
+    res.status(200).json({
+        code: 200,
+        msg: "토큰이 발급되었습니다",
+        access_token
+    });
 })
 
 app.listen(port , () => {
