@@ -5,14 +5,18 @@ const cookiePaser = require('cookie-parser');
 const database = require('./db');
 const { validUser } = require("./middleware/auth");
 const cors = require('cors');
+const { CookieConfig } = require("./constants");
 require("dotenv").config();
 
 const app = express();
 const salt = 12;
-const port = 3001
+const port = 3001;
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: true,
+    credentials: true,
+}));
 app.use(cookiePaser());
 app.use(express.urlencoded({ extended: false }));
 
@@ -54,12 +58,12 @@ app.post('/login' , async ( req , res ) => {
         return
     }
     const access_token = jwt.sign({ id } , process.env.SECRET_KEY);
-    res.cookie('access_token' , access_token , { httpOnly: true });
+    res.cookie('access_token' , access_token , CookieConfig);
     const userData = {
         id: user[ 0 ].id ,
         username: user[0].username,
         signup_date: user[0].signup_date,
-        birth: user[ 0 ].birth,
+        birth: user[0].birth,
     }
     res.send(userData);
 })
